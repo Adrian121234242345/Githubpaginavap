@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VapeShop - Tienda Oficial de Vapeo</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fuente Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        neon: {
+                            purple: '#a855f7',
+                            cyan: '#06b6d4',
+                            pink: '#ec4899'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #09090b;
+            color: #f4f4f5;
+            overflow-x: hidden;
+        }
+        /* Efecto cristal y brillo neón */
+        .glass-panel {
+            background: rgba(24, 24, 27, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .neon-glow {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+        }
+        .neon-text {
+            background: linear-gradient(to right, #c084fc, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09090b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a855f7;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-purple-500 selection:text-white">
+
+    <!-- =====================================================================
+         1. MODAL DE VERIFICACIÓN DE EDAD (+18)
+         ===================================================================== -->
+    <div id="age-gate-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 hidden">
+        <div class="glass-panel max-w-md w-full rounded-2xl p-8 text-center border border-purple-500/30 neon-glow">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-500/10 border border-purple-500/40 flex items-center justify-center text-purple-400 font-extrabold text-2xl">
+                +18
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-2">Verificación de Edad</h2>
+            <p class="text-zinc-400 text-sm mb-6 leading-relaxed">
+                Los productos mostrados en esta tienda están destinados exclusivamente a adultos mayores de edad (18+ años). Por favor, confirma tu edad para continuar.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button onclick="verifyAge(true)" class="flex-1 bg-gradient-to-r from-purple-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white font-semibold py-3 px-4 rounded-xl transition shadow-lg shadow-purple-500/20">
+                    Soy mayor de 18 años
+                </button>
+                <button onclick="verifyAge(false)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold py-3 px-4 rounded-xl transition">
+                    Salir
+                </button>
+            </div>
+            <p class="text-xs text-zinc-500 mt-4">
+                Al entrar aceptas nuestros términos de uso y normativa vigente.
+            </p>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         2. NOTIFICACIÓN TOAST (Reemplazo elegante de alert)
+         ===================================================================== -->
+    <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- =====================================================================
+         3. HEADER / NAVEGACIÓN
+         ===================================================================== -->
+    <header class="sticky top-0 z-30 glass-panel border-b border-zinc-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-2 group">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-cyan-400 flex items-center justify-center text-white font-bold shadow-md group-hover:scale-105 transition">
+                    <i data-lucide="wind" class="w-5 h-5"></i>
+                </div>
+                <span id="header-store-name" class="text-xl font-extrabold tracking-tight neon-text">VapeCloud</span>
+            </a>
+
+            <!-- Links Desktop -->
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-zinc-300">
+                <a href="#catalogo" class="hover:text-white transition">Catálogo</a>
+                <a href="#instagram-section" class="hover:text-white transition">Comunidad IG</a>
+                <a href="#info-envios" class="hover:text-white transition">Envíos y Pagos</a>
+            </nav>
+
+            <!-- Acciones Derecha -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Botón Instagram -->
+                <a id="header-ig-link" href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="p-2.5 rounded-xl bg-zinc-900 hover:bg-pink-500/10 text-zinc-300 hover:text-pink-400 border border-zinc-800 transition" title="Síguenos en Instagram">
+                    <i data-lucide="instagram" class="w-5 h-5"></i>
+                </a>
+
+                <!-- Botón Configurar Tienda (Modo Edición) -->
+                <button onclick="toggleAdminModal(true)" class="p-2.5 rounded-xl bg-zinc-900 hover:bg-purple-500/10 text-zinc-300 hover:text-purple-400 border border-zinc-800 transition flex items-center gap-1.5 text-xs font-semibold" title="Editar productos y ajustes">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Editar Tienda</span>
+                </button>
+
+                <!-- Botón Carrito -->
+                <button onclick="toggleCart(true)" class="relative p-2.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 transition flex items-center gap-2">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    <span id="cart-count-badge" class="bg-purple-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- =====================================================================
+         4. HERO BANNER PRINCIPAL
+         ===================================================================== -->
+    <section class="relative overflow-hidden py-14 sm:py-20 border-b border-zinc-800/60">
+        <!-- Fondos decorativos neón -->
+        <div class="absolute -top-24 -left-24 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute top-1/2 -right-24 w-80 h-80 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center max-w-3xl">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/30 mb-5">
+                <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> Pedidos rápidos directos por WhatsApp
+            </span>
+            <h1 id="hero-title" class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white mb-5 leading-tight">
+                Sabores intensos, <span class="neon-text">nubes perfectas.</span>
+            </h1>
+            <p id="hero-subtitle" class="text-zinc-400 text-base sm:text-lg mb-8 leading-relaxed">
+                Descubre los mejores vapers desechables, pods recargables y e-liquids premium. Elige tus favoritos y cierra tu pedido en segundos por WhatsApp.
+            </p>
+            <div class="flex flex-wrap items-center justify-center gap-4">
+                <a href="#catalogo" class="bg-gradient-to-r from-purple-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white font-bold py-3.5 px-7 rounded-xl shadow-lg shadow-purple-500/25 transition flex items-center gap-2">
+                    Explorar Catálogo <i data-lucide="arrow-down" class="w-4 h-4"></i>
+                </a>
+                <a id="hero-wa-btn" href="#" target="_blank" class="bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 font-semibold py-3.5 px-7 rounded-xl transition flex items-center gap-2">
+                    <i data-lucide="message-circle" class="w-5 h-5 text-green-400"></i> Consultar por WhatsApp
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================================
+         5. CATÁLOGO DE PRODUCTOS, BUSCADOR Y FILTROS
+         ===================================================================== -->
+    <main id="catalogo" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <!-- Barra de herramientas: Buscador y Categorías -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+            <div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-white">Nuestro Catálogo</h2>
+                <p class="text-zinc-400 text-sm mt-1">Selecciona los productos que deseas añadir a tu pedido</p>
+            </div>
+
+            <!-- Buscador -->
+            <div class="relative w-full md:w-80">
+                <i data-lucide="search" class="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" id="search-input" oninput="renderProducts()" placeholder="Buscar sabor, marca, caladas..." 
+                    class="w-full bg-zinc-900/90 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none transition">
+            </div>
+        </div>
+
+        <!-- Botones de Filtro por Categoría -->
+        <div id="category-filters" class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
+            <button onclick="setCategory('Todos')" data-cat="Todos" class="cat-btn active px-4 py-2 rounded-xl text-sm font-semibold bg-purple-600 text-white transition whitespace-nowrap">
+                Todos
+            </button>
+            <button onclick="setCategory('Desechables')" data-cat="Desechables" class="cat-btn px-4 py-2 rounded-xl text-sm font-semibold bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 transition whitespace-nowrap">
+                Desechables
+            </button>
+            <button onclick="setCategory('Pods Recargables')" data-cat="Pods Recargables" class="cat-btn px-4 py-2 rounded-xl text-sm font-semibold bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 transition whitespace-nowrap">
+                Pods Recargables
+            </button>
+            <button onclick="setCategory('Líquidos')" data-cat="Líquidos" class="cat-btn px-4 py-2 rounded-xl text-sm font-semibold bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 transition whitespace-nowrap">
+                Líquidos / Sales
+            </button>
+            <button onclick="setCategory('Accesorios')" data-cat="Accesorios" class="cat-btn px-4 py-2 rounded-xl text-sm font-semibold bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 transition whitespace-nowrap">
+                Resistencias y Accesorios
+            </button>
+        </div>
+
+        <!-- Cuadrícula de Productos -->
+        <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Los productos se renderizan dinámicamente con JS -->
+        </div>
+
+        <!-- Mensaje si no hay resultados -->
+        <div id="no-results" class="hidden text-center py-16 glass-panel rounded-2xl">
+            <i data-lucide="frown" class="w-12 h-12 text-zinc-500 mx-auto mb-3"></i>
+            <h3 class="text-lg font-semibold text-white">No encontramos productos</h3>
+            <p class="text-zinc-400 text-sm mt-1">Prueba con otro sabor o limpia los filtros de búsqueda.</p>
+        </div>
+    </main>
+
+    <!-- =====================================================================
+         6. SECCIÓN DE INSTAGRAM (VÍNCULO SOCIAL)
+         ===================================================================== -->
+    <section id="instagram-section" class="border-t border-zinc-800/80 bg-zinc-950/60 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
+                <div>
+                    <span class="text-pink-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                        <i data-lucide="instagram" class="w-4 h-4"></i> Comunidad & Novedades
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white">Síguenos en Instagram</h2>
+                    <p class="text-zinc-400 text-sm mt-1">Entérate antes que nadie de nuevos sabores, sorteos y reposiciones.</p>
+                </div>
+                <a id="ig-section-btn" href="https://instagram.com" target="_blank" rel="noopener noreferrer" 
+                   class="inline-flex items-center gap-2 bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500 hover:opacity-90 text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition shadow-lg">
+                    <i data-lucide="instagram" class="w-4 h-4"></i>
+                    <span id="ig-handle-display">@vapecloud.shop</span>
+                </a>
+            </div>
+
+            <!-- Cuadrícula visual estilo feed de Instagram -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a id="ig-card-1" href="https://instagram.com" target="_blank" class="group relative aspect-square rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                    <img src="https://images.unsplash.com/photo-1560913210-91e7810207b8?auto=format&fit=crop&w=600&q=80" onerror="this.src='https://placehold.co/600x600/18181b/a855f7?text=Nuevos+Sabores'" alt="Post Instagram 1" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <span class="text-white font-semibold text-sm flex items-center gap-1.5"><i data-lucide="external-link" class="w-4 h-4"></i> Ver en IG</span>
+                    </div>
+                </a>
+                <a id="ig-card-2" href="https://instagram.com" target="_blank" class="group relative aspect-square rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                    <img src="https://images.unsplash.com/photo-1534951009808-766178b47a4f?auto=format&fit=crop&w=600&q=80" onerror="this.src='https://placehold.co/600x600/18181b/06b6d4?text=Pods+Edition'" alt="Post Instagram 2" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <span class="text-white font-semibold text-sm flex items-center gap-1.5"><i data-lucide="external-link" class="w-4 h-4"></i> Ver en IG</span>
+                    </div>
+                </a>
+                <a id="ig-card-3" href="https://instagram.com" target="_blank" class="group relative aspect-square rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                    <img src="https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?auto=format&fit=crop&w=600&q=80" onerror="this.src='https://placehold.co/600x600/18181b/ec4899?text=E-Liquids'" alt="Post Instagram 3" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <span class="text-white font-semibold text-sm flex items-center gap-1.5"><i data-lucide="external-link" class="w-4 h-4"></i> Ver en IG</span>
+                    </div>
+                </a>
+                <a id="ig-card-4" href="https://instagram.com" target="_blank" class="group relative aspect-square rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800">
+                    <img src="https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=600&q=80" onerror="this.src='https://placehold.co/600x600/18181b/a855f7?text=Comunidad+Vape'" alt="Post Instagram 4" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <span class="text-white font-semibold text-sm flex items-center gap-1.5"><i data-lucide="external-link" class="w-4 h-4"></i> Ver en IG</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================================
+         7. SECCIÓN INFORMATIVA (CÓMO COMPRAR)
+         ===================================================================== -->
+    <section id="info-envios" class="border-t border-zinc-800/80 py-14">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass-panel p-6 rounded-2xl">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center mb-4">
+                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-bold text-white text-lg mb-1">1. Elige tus Vapers</h3>
+                <p class="text-zinc-400 text-sm">Añade al carrito tus sabores y dispositivos favoritos desde nuestro catálogo actualizado.</p>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl">
+                <div class="w-10 h-10 rounded-xl bg-green-500/15 text-green-400 flex items-center justify-center mb-4">
+                    <i data-lucide="message-circle" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-bold text-white text-lg mb-1">2. Envía por WhatsApp</h3>
+                <p class="text-zinc-400 text-sm">Pulsa en "Pedir por WhatsApp". Se generará tu lista lista para enviarnos con un clic.</p>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl">
+                <div class="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center mb-4">
+                    <i data-lucide="truck" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-bold text-white text-lg mb-1">3. Entrega Rápida</h3>
+                <p class="text-zinc-400 text-sm">Coordinamos el método de pago (Bizum, transferencia o efectivo) y te lo enviamos rápido.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- =====================================================================
+         8. FOOTER
+         ===================================================================== -->
+    <footer class="border-t border-zinc-800 bg-zinc-950 py-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="text-center md:text-left">
+                <span id="footer-store-name" class="text-lg font-extrabold neon-text">VapeCloud</span>
+                <p class="text-xs text-zinc-500 mt-1">Prohibida la venta a menores de 18 años. Productos de vapeo.</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <a id="footer-ig-link" href="https://instagram.com" target="_blank" class="text-zinc-400 hover:text-pink-400 text-sm flex items-center gap-1.5 transition">
+                    <i data-lucide="instagram" class="w-4 h-4"></i> Instagram
+                </a>
+                <a id="footer-wa-link" href="#" target="_blank" class="text-zinc-400 hover:text-green-400 text-sm flex items-center gap-1.5 transition">
+                    <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp
+                </a>
+                <button onclick="toggleAdminModal(true)" class="text-zinc-400 hover:text-purple-400 text-sm flex items-center gap-1.5 transition">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Configurar Tienda
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- =====================================================================
+         9. BOTÓN FLOTANTE DE WHATSAPP
+         ===================================================================== -->
+    <a id="floating-wa-btn" href="#" target="_blank" rel="noopener noreferrer" 
+       class="fixed bottom-6 right-6 z-30 bg-green-500 hover:bg-green-400 text-zinc-950 font-bold p-4 rounded-full shadow-xl shadow-green-500/30 transition transform hover:scale-110 flex items-center justify-center"
+       title="Hablar por WhatsApp">
+        <i data-lucide="message-circle" class="w-7 h-7 fill-current"></i>
+    </a>
+
+    <!-- =====================================================================
+         10. PANEL LATERAL DEL CARRITO DE COMPRAS (SLIDE-OVER)
+         ===================================================================== -->
+    <div id="cart-drawer" class="fixed inset-0 z-40 hidden">
+        <!-- Fondo oscuro -->
+        <div onclick="toggleCart(false)" class="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity"></div>
+        
+        <!-- Contenedor lateral -->
+        <div class="absolute inset-y-0 right-0 max-w-md w-full bg-zinc-950 border-l border-zinc-800 shadow-2xl flex flex-col">
+            <!-- Cabecera Carrito -->
+            <div class="p-5 border-b border-zinc-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="shopping-bag" class="w-5 h-5 text-purple-400"></i>
+                    <h2 class="text-lg font-bold text-white">Tu Pedido</h2>
+                </div>
+                <button onclick="toggleCart(false)" class="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Lista de items en carrito -->
+            <div id="cart-items-container" class="flex-1 overflow-y-auto p-5 space-y-4">
+                <!-- Se rellena dinámicamente -->
+            </div>
+
+            <!-- Pie del carrito y envío por WhatsApp -->
+            <div id="cart-footer" class="p-5 border-t border-zinc-800 bg-zinc-900/50 space-y-4">
+                <!-- Datos opcionales del cliente -->
+                <div class="space-y-2.5">
+                    <input type="text" id="customer-name" placeholder="Tu nombre (opcional)" 
+                        class="w-full bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl px-3.5 py-2 text-sm text-white outline-none">
+                    <input type="text" id="customer-address" placeholder="Ciudad / Dirección de entrega (opcional)" 
+                        class="w-full bg-zinc-950 border border-zinc-800 focus:border-purple-500 rounded-xl px-3.5 py-2 text-sm text-white outline-none">
+                </div>
+
+                <!-- Subtotal -->
+                <div class="flex items-center justify-between text-base font-bold text-white pt-2 border-t border-zinc-800/80">
+                    <span>Total Estimado:</span>
+                    <span id="cart-total-price" class="text-xl text-cyan-400">0.00 €</span>
+                </div>
+
+                <!-- Botón WhatsApp Checkout -->
+                <button onclick="checkoutWhatsApp()" class="w-full bg-green-500 hover:bg-green-400 text-zinc-950 font-extrabold py-3.5 px-4 rounded-xl shadow-lg shadow-green-500/20 transition flex items-center justify-center gap-2">
+                    <i data-lucide="send" class="w-5 h-5"></i> Completar Pedido por WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         11. PANEL DE ADMINISTRACIÓN VISUAL ("EDITAR TIENDA")
+         Permite modificar datos y añadir productos sin tocar código
+         ===================================================================== -->
+    <div id="admin-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+            <!-- Header Modal -->
+            <div class="p-5 border-b border-zinc-800 flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-5 h-5 text-purple-400"></i> Panel de Edición Fácil
+                    </h2>
+                    <p class="text-xs text-zinc-400 mt-0.5">Edita tu WhatsApp, Instagram y productos al instante en tu navegador.</p>
+                </div>
+                <button onclick="toggleAdminModal(false)" class="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Contenido Scrollable -->
+            <div class="p-6 overflow-y-auto space-y-8">
+                
+                <!-- Bloque A: Datos de Contacto y Marca -->
+                <div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-purple-400 mb-3">1. Ajustes de la Tienda y Redes</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-zinc-400 mb-1">Nombre de tu Tienda</label>
+                            <input type="text" id="cfg-store-name" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-sm text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-zinc-400 mb-1">Moneda (ej. €, $, MXN)</label>
+                            <input type="text" id="cfg-currency" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-sm text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-zinc-400 mb-1">Teléfono WhatsApp (con prefijo país, sin +)</label>
+                            <input type="text" id="cfg-whatsapp" placeholder="Ej: 34600123456" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-sm text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-zinc-400 mb-1">Usuario de Instagram (sin @)</label>
+                            <input type="text" id="cfg-instagram" placeholder="Ej: vapecloud.shop" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-sm text-white">
+                        </div>
+                    </div>
+                    <button onclick="saveStoreSettings()" class="mt-4 bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold py-2 px-4 rounded-xl transition">
+                        Guardar Ajustes de Marca
+                    </button>
+                </div>
+
+                <!-- Bloque B: Añadir Nuevo Vaper -->
+                <div class="border-t border-zinc-800 pt-6">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-cyan-400 mb-3">2. Añadir Nuevo Producto</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <input type="text" id="new-prod-name" placeholder="Nombre (ej. ElfBar 5000)" class="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white">
+                        <input type="text" id="new-prod-flavor" placeholder="Sabor (ej. Sandía Helada)" class="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white">
+                        <select id="new-prod-cat" class="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white">
+                            <option value="Desechables">Desechables</option>
+                            <option value="Pods Recargables">Pods Recargables</option>
+                            <option value="Líquidos">Líquidos</option>
+                            <option value="Accesorios">Accesorios</option>
+                        </select>
+                        <input type="text" id="new-prod-puffs" placeholder="Caladas/Capacidad (ej. 5000 puffs)" class="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white">
+                        <input type="text" id="new-prod-nic" placeholder="Nicotina (ej. 20mg / 0mg)" class="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white">
+                        <input type="number" step="0.01" id="new-prod-price" placeholder="Precio (ej. 12.50)" class="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white">
+                    </div>
+                    <div class="mt-3 flex flex-col sm:flex-row gap-3">
+                        <input type="text" id="new-prod-img" placeholder="URL de la imagen (opcional, se pondrá una por defecto si lo dejas vacío)" class="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white">
+                        <button onclick="addNewProduct()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-semibold py-2 px-5 rounded-xl transition whitespace-nowrap">
+                            + Añadir Producto
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bloque C: Gestionar Productos Existentes -->
+                <div class="border-t border-zinc-800 pt-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-300">3. Productos en Catálogo</h3>
+                        <button onclick="resetDefaultData()" class="text-xs text-red-400 hover:underline">Restaurar ejemplos originales</button>
+                    </div>
+                    <div id="admin-products-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        <!-- Lista editable generada por JS -->
+                    </div>
+                </div>
+
+                <!-- Bloque D: Exportar Archivo HTML Listo para Subir -->
+                <div class="border-t border-zinc-800 pt-6 bg-zinc-900/50 p-4 rounded-xl">
+                    <h3 class="text-sm font-bold text-white mb-1">¿Quieres guardar los cambios permanentemente en el archivo?</h3>
+                    <p class="text-xs text-zinc-400 mb-3">
+                        Como estás en localhost, los cambios se guardan en tu navegador. Pulsa este botón para descargar una copia actualizada de tu <code>index.html</code> con todos tus productos y teléfonos ya grabados dentro.
+                    </p>
+                    <button onclick="exportUpdatedHTML()" class="bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition flex items-center gap-2">
+                        <i data-lucide="download" class="w-4 h-4 text-cyan-400"></i> Descargar index.html Actualizado
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         12. LÓGICA JAVASCRIPT Y DATOS INICIALES (FÁCIL DE EDITAR)
+         ===================================================================== -->
+    <script>
+        /* -------------------------------------------------------------------
+           ZONA DE CONFIGURACIÓN INICIAL (Puedes editar esto o usar el botón
+           "Editar Tienda" directamente en la web)
+           ------------------------------------------------------------------- */
+        const DEFAULT_CONFIG = {
+            storeName: "VapeCloud",
+            currency: "€",
+            whatsappNumber: "34600000000", // Pon tu número con código de país sin '+'
+            instagramUser: "vapecloud.shop" // Tu usuario de Instagram sin '@'
+        };
+
+        const DEFAULT_PRODUCTS = [
+            {
+                id: 1,
+                name: "Lost Mary BM600",
+                flavor: "Triple Mango Ice",
+                category: "Desechables",
+                puffs: "600 Caladas",
+                nicotine: "20mg Sales",
+                price: 7.90,
+                image: "https://images.unsplash.com/photo-1560913210-91e7810207b8?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 2,
+                name: "ElfBar BC5000",
+                flavor: "Sandía Fresa (Watermelon)",
+                category: "Desechables",
+                puffs: "5000 Caladas",
+                nicotine: "0mg Sin Nicotina",
+                price: 14.50,
+                image: "https://images.unsplash.com/photo-1534951009808-766178b47a4f?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 3,
+                name: "Vaporesso XROS 3 Mini",
+                flavor: "Kit Pod Recargable - Negro",
+                category: "Pods Recargables",
+                puffs: "Batería 1000mAh",
+                nicotine: "Recargable",
+                price: 22.90,
+                image: "https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 4,
+                name: "Nasty Juice Cush Man",
+                flavor: "Mango & Menta 50ml",
+                category: "Líquidos",
+                puffs: "Botella 50ml",
+                nicotine: "0mg (Base libre)",
+                price: 13.50,
+                image: "https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 5,
+                name: "Crystal Bar SKE",
+                flavor: "Blue Razz Lemonade",
+                category: "Desechables",
+                puffs: "600 Caladas",
+                nicotine: "20mg Sales",
+                price: 7.50,
+                image: "https://images.unsplash.com/photo-1560913210-91e7810207b8?auto=format&fit=crop&w=500&q=80"
+            },
+            {
+                id: 6,
+                name: "Pack 4 Cartuchos XROS",
+                flavor: "Resistencia Mesh 0.8 ohm",
+                category: "Accesorios",
+                puffs: "Capacidad 2ml",
+                nicotine: "Repuesto",
+                price: 11.90,
+                image: "https://images.unsplash.com/photo-1527661591475-527312dd65f5?auto=format&fit=crop&w=500&q=80"
+            }
+        ];
+
+        /* -------------------------------------------------------------------
+           ESTADO DE LA APLICACIÓN
+           ------------------------------------------------------------------- */
+        let storeConfig = JSON.parse(localStorage.getItem('vape_store_config')) || { ...DEFAULT_CONFIG };
+        let products = JSON.parse(localStorage.getItem('vape_store_products')) || [...DEFAULT_PRODUCTS];
+        let cart = JSON.parse(localStorage.getItem('vape_store_cart')) || [];
+        let activeCategory = 'Todos';
+
+        /* -------------------------------------------------------------------
+           INICIALIZACIÓN AL CARGAR LA PÁGINA
+           ------------------------------------------------------------------- */
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            checkAgeGate();
+            applyStoreConfig();
+            renderProducts();
+            updateCartUI();
+        });
+
+        /* -------------------------------------------------------------------
+           1. VERIFICACIÓN DE EDAD (+18)
+           ------------------------------------------------------------------- */
+        function checkAgeGate() {
+            const isVerified = localStorage.getItem('vape_age_verified');
+            const modal = document.getElementById('age-gate-modal');
+            if (!isVerified) {
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function verifyAge(isAdult) {
+            if (isAdult) {
+                localStorage.setItem('vape_age_verified', 'true');
+                document.getElementById('age-gate-modal').classList.add('hidden');
+                showToast('¡Bienvenido! Acceso verificado (+18)');
+            } else {
+                window.location.href = 'https://www.google.com';
+            }
+        }
+
+        /* -------------------------------------------------------------------
+           2. APLICAR CONFIGURACIÓN DE TIENDA (WHATSAPP / INSTAGRAM / NOMBRE)
+           ------------------------------------------------------------------- */
+        function applyStoreConfig() {
+            // Nombre de tienda
+            document.title = `${storeConfig.storeName} - Tienda Oficial de Vapeo`;
+            document.getElementById('header-store-name').textContent = storeConfig.storeName;
+            document.getElementById('footer-store-name').textContent = storeConfig.storeName;
+
+            // Enlaces de Instagram
+            const igUrl = `https://instagram.com/${storeConfig.instagramUser.replace('@', '')}`;
+            document.getElementById('header-ig-link').href = igUrl;
+            document.getElementById('ig-section-btn').href = igUrl;
+            document.getElementById('footer-ig-link').href = igUrl;
+            document.getElementById('ig-handle-display').textContent = `@${storeConfig.instagramUser.replace('@', '')}`;
+            
+            ['ig-card-1', 'ig-card-2', 'ig-card-3', 'ig-card-4'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.href = igUrl;
+            });
+
+            // Enlaces generales de WhatsApp
+            const cleanPhone = storeConfig.whatsappNumber.replace(/\D/g, '');
+            const waWelcomeText = encodeURIComponent(`¡Hola ${storeConfig.storeName}! Vengo desde su página web y me gustaría hacer una consulta.`);
+            const waUrl = `https://wa.me/${cleanPhone}?text=${waWelcomeText}`;
+            
+            document.getElementById('hero-wa-btn').href = waUrl;
+            document.getElementById('footer-wa-link').href = waUrl;
+            document.getElementById('floating-wa-btn').href = waUrl;
+
+            // Rellenar inputs del panel admin
+            document.getElementById('cfg-store-name').value = storeConfig.storeName;
+            document.getElementById('cfg-currency').value = storeConfig.currency;
+            document.getElementById('cfg-whatsapp').value = storeConfig.whatsappNumber;
+            document.getElementById('cfg-instagram').value = storeConfig.instagramUser;
+        }
+
+        /* -------------------------------------------------------------------
+           3. RENDERIZADO DE PRODUCTOS, FILTROS Y BÚSQUEDA
+           ------------------------------------------------------------------- */
+        function setCategory(category) {
+            activeCategory = category;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === category) {
+                    btn.className = 'cat-btn active px-4 py-2 rounded-xl text-sm font-semibold bg-purple-600 text-white transition whitespace-nowrap shadow-md shadow-purple-500/20';
+                } else {
+                    btn.className = 'cat-btn px-4 py-2 rounded-xl text-sm font-semibold bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 transition whitespace-nowrap';
+                }
+            });
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('products-grid');
+            const noResults = document.getElementById('no-results');
+            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+
+            const filtered = products.filter(p => {
+                const matchesCategory = activeCategory === 'Todos' || p.category === activeCategory;
+                const matchesSearch = p.name.toLowerCase().includes(searchTerm) || 
+                                      p.flavor.toLowerCase().includes(searchTerm) ||
+                                      p.category.toLowerCase().includes(searchTerm);
+                return matchesCategory && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                noResults.classList.remove('hidden');
+                return;
+            }
+
+            noResults.classList.add('hidden');
+            grid.innerHTML = filtered.map(prod => `
+                <div class="glass-panel rounded-2xl overflow-hidden flex flex-col justify-between group hover:border-purple-500/40 transition duration-300">
+                    <div>
+                        <!-- Imagen -->
+                        <div class="relative h-52 bg-zinc-900 overflow-hidden">
+                            <img src="${prod.image}" 
+                                 onerror="this.src='https://placehold.co/500x400/18181b/a855f7?text=${encodeURIComponent(prod.name)}'" 
+                                 alt="${prod.name}" 
+                                 class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                            <span class="absolute top-3 left-3 bg-black/75 backdrop-blur-md text-xs font-semibold px-2.5 py-1 rounded-lg text-zinc-200 border border-white/10">
+                                ${prod.category}
+                            </span>
+                        </div>
+                        
+                        <!-- Info Producto -->
+                        <div class="p-5">
+                            <h3 class="font-bold text-lg text-white leading-snug">${prod.name}</h3>
+                            <p class="text-purple-400 font-medium text-sm mt-0.5">${prod.flavor}</p>
+                            
+                            <!-- Etiquetas técnicas -->
+                            <div class="flex flex-wrap gap-1.5 mt-3">
+                                <span class="text-xs bg-zinc-900 text-zinc-300 px-2.5 py-1 rounded-md border border-zinc-800">
+                                    💨 ${prod.puffs}
+                                </span>
+                                <span class="text-xs bg-zinc-900 text-zinc-300 px-2.5 py-1 rounded-md border border-zinc-800">
+                                    💧 ${prod.nicotine}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Precio y Botón Añadir -->
+                    <div class="px-5 pb-5 pt-2 flex items-center justify-between border-t border-zinc-800/50 mt-2">
+                        <span class="text-xl font-extrabold text-white">
+                            ${Number(prod.price).toFixed(2)} ${storeConfig.currency}
+                        </span>
+                        <button onclick="addToCart(${prod.id})" 
+                                class="bg-purple-600 hover:bg-purple-500 active:scale-95 text-white text-sm font-semibold py-2.5 px-4 rounded-xl transition flex items-center gap-1.5 shadow-md shadow-purple-600/20">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Añadir
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        /* -------------------------------------------------------------------
+           4. GESTIÓN DEL CARRITO DE COMPRAS
+           ------------------------------------------------------------------- */
+        function toggleCart(open) {
+            const drawer = document.getElementById('cart-drawer');
+            if (open) {
+                drawer.classList.remove('hidden');
+            } else {
+                drawer.classList.add('hidden');
+            }
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const existingItem = cart.find(item => item.id === productId);
+            if (existingItem) {
+                existingItem.qty += 1;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+
+            saveCart();
+            updateCartUI();
+            showToast(`Añadido: ${product.name}`);
+        }
+
+        function updateQty(productId, delta) {
+            const index = cart.findIndex(item => item.id === productId);
+            if (index === -1) return;
+
+            cart[index].qty += delta;
+            if (cart[index].qty <= 0) {
+                cart.splice(index, 1);
+            }
+
+            saveCart();
+            updateCartUI();
+        }
+
+        function saveCart() {
+            localStorage.setItem('vape_store_cart', JSON.stringify(cart));
+        }
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-items-container');
+            const badge = document.getElementById('cart-count-badge');
+            const totalEl = document.getElementById('cart-total-price');
+            const footer = document.getElementById('cart-footer');
+
+            const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+            const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+            badge.textContent = totalItems;
+            totalEl.textContent = `${totalPrice.toFixed(2)} ${storeConfig.currency}`;
+
+            if (cart.length === 0) {
+                footer.classList.add('hidden');
+                container.innerHTML = `
+                    <div class="text-center py-16">
+                        <i data-lucide="shopping-bag" class="w-12 h-12 text-zinc-700 mx-auto mb-3"></i>
+                        <p class="text-zinc-400 font-medium">Tu carrito está vacío</p>
+                        <p class="text-zinc-500 text-xs mt-1">Explora el catálogo y añade tus vapers favoritos.</p>
+                    </div>
+                `;
+            } else {
+                footer.classList.remove('hidden');
+                container.innerHTML = cart.map(item => `
+                    <div class="flex items-center gap-3.5 bg-zinc-900/90 p-3 rounded-xl border border-zinc-800">
+                        <img src="${item.image}" onerror="this.src='https://placehold.co/100x100/18181b/a855f7?text=Vape'" class="w-16 h-16 rounded-lg object-cover bg-zinc-800">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-sm font-bold text-white truncate">${item.name}</h4>
+                            <p class="text-xs text-purple-400 truncate">${item.flavor}</p>
+                            <p class="text-sm font-semibold text-zinc-200 mt-1">${(item.price * item.qty).toFixed(2)} ${storeConfig.currency}</p>
+                        </div>
+                        <div class="flex items-center gap-2 bg-zinc-950 rounded-lg p-1 border border-zinc-800">
+                            <button onclick="updateQty(${item.id}, -1)" class="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white">-</button>
+                            <span class="text-xs font-bold w-4 text-center">${item.qty}</span>
+                            <button onclick="updateQty(${item.id}, 1)" class="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-white">+</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            lucide.createIcons();
+        }
+
+        /* -------------------------------------------------------------------
+           5. CHECKOUT DIRECTO POR WHATSAPP
+           ------------------------------------------------------------------- */
+        function checkoutWhatsApp() {
+            if (cart.length === 0) return;
+
+            const customerName = document.getElementById('customer-name').value.trim();
+            const customerAddress = document.getElementById('customer-address').value.trim();
+            const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+            let message = `¡Hola *${storeConfig.storeName}*! 👋 Me gustaría realizar el siguiente pedido:\n\n`;
+            
+            cart.forEach(item => {
+                message += `▪️ *${item.qty}x* ${item.name} (${item.flavor}) - ${(item.price * item.qty).toFixed(2)}${storeConfig.currency}\n`;
+            });
+
+            message += `\n💰 *TOTAL: ${totalPrice.toFixed(2)} ${storeConfig.currency}*\n`;
+
+            if (customerName) message += `👤 *Nombre:* ${customerName}\n`;
+            if (customerAddress) message += `📍 *Entrega:* ${customerAddress}\n`;
+
+            message += `\n¿Me confirmáis disponibilidad y método de pago? Gracias.`;
+
+            const cleanPhone = storeConfig.whatsappNumber.replace(/\D/g, '');
+            const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+            
+            window.open(whatsappUrl, '_blank');
+        }
+
+        /* -------------------------------------------------------------------
+           6. PANEL DE EDICIÓN FÁCIL (ADMIN MODAL)
+           ------------------------------------------------------------------- */
+        function toggleAdminModal(open) {
+            const modal = document.getElementById('admin-modal');
+            if (open) {
+                renderAdminProductList();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function saveStoreSettings() {
+            storeConfig.storeName = document.getElementById('cfg-store-name').value.trim() || "VapeCloud";
+            storeConfig.currency = document.getElementById('cfg-currency').value.trim() || "€";
+            storeConfig.whatsappNumber = document.getElementById('cfg-whatsapp').value.trim() || "34600000000";
+            storeConfig.instagramUser = document.getElementById('cfg-instagram').value.trim() || "vapecloud.shop";
+
+            localStorage.setItem('vape_store_config', JSON.stringify(storeConfig));
+            applyStoreConfig();
+            renderProducts();
+            updateCartUI();
+            showToast('¡Ajustes guardados correctamente!');
+        }
+
+        function addNewProduct() {
+            const name = document.getElementById('new-prod-name').value.trim();
+            const flavor = document.getElementById('new-prod-flavor').value.trim();
+            const category = document.getElementById('new-prod-cat').value;
+            const puffs = document.getElementById('new-prod-puffs').value.trim() || "600 Caladas";
+            const nicotine = document.getElementById('new-prod-nic').value.trim() || "20mg";
+            const price = parseFloat(document.getElementById('new-prod-price').value);
+            const image = document.getElementById('new-prod-img').value.trim() || "https://images.unsplash.com/photo-1560913210-91e7810207b8?auto=format&fit=crop&w=500&q=80";
+
+            if (!name || !flavor || isNaN(price)) {
+                showToast('Por favor rellena nombre, sabor y precio.', true);
+                return;
+            }
+
+            const newProd = {
+                id: Date.now(),
+                name,
+                flavor,
+                category,
+                puffs,
+                nicotine,
+                price,
+                image
+            };
+
+            products.unshift(newProd);
+            localStorage.setItem('vape_store_products', JSON.stringify(products));
+
+            // Limpiar formulario
+            document.getElementById('new-prod-name').value = '';
+            document.getElementById('new-prod-flavor').value = '';
+            document.getElementById('new-prod-puffs').value = '';
+            document.getElementById('new-prod-nic').value = '';
+            document.getElementById('new-prod-price').value = '';
+            document.getElementById('new-prod-img').value = '';
+
+            renderProducts();
+            renderAdminProductList();
+            showToast('¡Producto añadido al catálogo!');
+        }
+
+        function deleteProduct(id) {
+            products = products.filter(p => p.id !== id);
+            localStorage.setItem('vape_store_products', JSON.stringify(products));
+            renderProducts();
+            renderAdminProductList();
+            showToast('Producto eliminado');
+        }
+
+        function renderAdminProductList() {
+            const list = document.getElementById('admin-products-list');
+            list.innerHTML = products.map(p => `
+                <div class="flex items-center justify-between bg-zinc-900 p-2.5 rounded-xl border border-zinc-800 text-sm">
+                    <div class="truncate pr-2">
+                        <span class="font-bold text-white">${p.name}</span> 
+                        <span class="text-zinc-400">- ${p.flavor}</span>
+                        <span class="text-cyan-400 font-semibold ml-2">${Number(p.price).toFixed(2)}${storeConfig.currency}</span>
+                    </div>
+                    <button onclick="deleteProduct(${p.id})" class="text-red-400 hover:bg-red-500/10 p-1.5 rounded-lg transition" title="Eliminar">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function resetDefaultData() {
+            localStorage.removeItem('vape_store_config');
+            localStorage.removeItem('vape_store_products');
+            storeConfig = { ...DEFAULT_CONFIG };
+            products = [...DEFAULT_PRODUCTS];
+            applyStoreConfig();
+            renderProducts();
+            renderAdminProductList();
+            showToast('Datos originales restaurados');
+        }
+
+        /* -------------------------------------------------------------------
+           7. EXPORTAR HTML CON LOS CAMBIOS YA INCRUSTADOS
+           ------------------------------------------------------------------- */
+        function exportUpdatedHTML() {
+            // Obtenemos el código fuente actual y reemplazamos DEFAULT_CONFIG y DEFAULT_PRODUCTS
+            let htmlContent = document.documentElement.outerHTML;
+            
+            const configRegex = /const DEFAULT_CONFIG = \{[\s\S]*?\};/;
+            const productsRegex = /const DEFAULT_PRODUCTS = \[[\s\S]*?\];/;
+
+            const newConfigStr = `const DEFAULT_CONFIG = ${JSON.stringify(storeConfig, null, 12)};`;
+            const newProductsStr = `const DEFAULT_PRODUCTS = ${JSON.stringify(products, null, 12)};`;
+
+            htmlContent = "<!DOCTYPE html>\n" + htmlContent
+                .replace(configRegex, newConfigStr)
+                .replace(productsRegex, newProductsStr);
+
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'index.html';
+            a.click();
+            showToast('Archivo index.html descargado con tus cambios');
+        }
+
+        /* -------------------------------------------------------------------
+           UTILIDAD: NOTIFICACIONES TOAST
+           ------------------------------------------------------------------- */
+        function showToast(message, isError = false) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `px-4 py-3 rounded-xl text-sm font-semibold shadow-xl border backdrop-blur-md transition transform translate-y-0 ${
+                isError 
+                ? 'bg-red-950/90 border-red-500/50 text-red-200' 
+                : 'bg-zinc-900/95 border-purple-500/50 text-white'
+            }`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 2800);
+        }
+    </script>
+</body>
+</html>
